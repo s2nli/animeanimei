@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anime Final</title><meta name="theme-color" content="#6c5ce7">
+<link rel="manifest" href="/manifest.json"><link rel="icon" href="/favicon.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css"></head><body>
+<header><a class="logo" href="/">Anime<span>Final</span></a>
+<div class="sb"><input id="q" placeholder="Search anime..." autocomplete="off"><button id="go">Search</button></div></header>
+<main>
+<div class="tabs" id="tabs"><button data-u="/api/trending" class="on">Trending</button><button data-u="/api/season">This Season</button><button data-u="/api/top">Top Rated</button></div>
+<h2 id="h">Trending</h2><div class="grid" id="g"><div class="msg">Loading...</div></div>
+</main>
+<script>
+const g=document.getElementById('g'),h=document.getElementById('h'),q=document.getElementById('q');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function card(a){const img=(a.images&&a.images.jpg&&(a.images.jpg.large_image_url||a.images.jpg.image_url))||'';
+const t=a.title_english||a.title||'Unknown';
+return `<a class="card" href="/watch?id=${a.mal_id}"><img loading="lazy" src="${esc(img)}" alt=""><div class="ci"><div class="ct">${esc(t)}</div><div class="cm">${a.score?'⭐ '+a.score:(a.year||'TBA')} · ${esc(a.type||'')}</div></div></a>`}
+async function load(url,title){h.textContent=title;g.innerHTML='<div class="msg">Loading...</div>';
+try{const r=await fetch(url);const d=await r.json();const l=d.data||[];
+g.innerHTML=l.length?l.map(card).join(''):'<div class="msg">Kuch nahi mila. Thodi der baad try karo.</div>'}
+catch(e){g.innerHTML='<div class="msg">Load nahi hua. Internet check karo.</div>'}}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');load(b.dataset.u,b.textContent)});
+function search(){const v=q.value.trim();if(v)load('/api/search?q='+encodeURIComponent(v),'Results for "'+v+'"')}
+document.getElementById('go').onclick=search;q.onkeydown=e=>{if(e.key==='Enter')search()};
+load('/api/trending','Trending');
+</script></body></html>

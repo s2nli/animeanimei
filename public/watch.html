@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anime Final</title><meta name="theme-color" content="#6c5ce7">
+<link rel="manifest" href="/manifest.json"><link rel="icon" href="/favicon.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script></head><body>
+<header><a class="logo" href="/">Anime<span>Final</span></a></header>
+<main><div class="wrap" id="app"><div class="msg">Loading...</div></div></main>
+<script>
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const id=new URLSearchParams(location.search).get('id');const app=document.getElementById('app');
+const safe=u=>/^https?:\/\//i.test(u||'')?u:'#';
+async function init(){
+ if(!id){app.innerHTML='<div class="msg">Anime ID nahi mila.</div>';return}
+ let d;try{const r=await fetch('/api/anime/'+encodeURIComponent(id));if(!r.ok)throw 0;d=await r.json()}
+ catch(e){app.innerHTML='<div class="msg">Load nahi hua. Thodi der baad refresh karo.</div>';return}
+ const a=d.info||{};const title=a.title_english||a.title||'Anime';document.title=title+' - Anime Final';
+ const img=(a.images&&a.images.jpg&&a.images.jpg.large_image_url)||'';
+ const pills=[a.type,a.status,a.episodes?a.episodes+' eps':'',a.year,a.score?'⭐ '+a.score:''].concat((a.genres||[]).map(x=>x.name)).filter(Boolean).map(x=>`<span class="pill">${esc(x)}</span>`).join('');
+ const yt=a.trailer&&a.trailer.youtube_id;
+ const links=(a.streaming||[]).map(s=>`<a class="btn" target="_blank" rel="noopener noreferrer" href="${esc(safe(s.url))}">${esc(s.name)}</a>`).join('');
+ const eps=(d.episodes||[]).map(e=>`<div class="ep"><b>${esc(e.mal_id)}</b>${esc(e.title||'Episode '+e.mal_id)}</div>`).join('');
+ app.innerHTML=`<div class="top"><img src="${esc(img)}" alt=""><div class="t"><h1>${esc(title)}</h1>${pills}<p class="syn">${esc(a.synopsis||'No synopsis.')}</p></div></div>
+ ${yt?`<div class="box"><h2>Trailer</h2><iframe class="vid" src="https://www.youtube.com/embed/${encodeURIComponent(yt)}" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe></div>`:''}
+ <div class="box"><h2>Watch Officially</h2>${links?`<div class="links">${links}</div>`:'<small>Is anime ke liye official streaming link nahi mila.</small>'}</div>
+ <div class="box"><h2>Play Your Own Link</h2><div class="own"><input id="u" placeholder="Apna .m3u8 ya .mp4 link paste karo"><button id="p">Play</button></div><video id="v" class="vid" controls playsinline></video><small id="s">Sirf wahi link chalao jo tumhare paas legally ho.</small></div>
+ <div class="box"><h2>Episodes</h2>${eps?`<div class="eps">${eps}</div>${d.has_next?'<small>Pehle 100 episodes dikhaye gaye.</small>':''}`:'<small>Episode list available nahi.</small>'}</div>`;
+ document.getElementById('p').onclick=play;document.getElementById('u').onkeydown=e=>{if(e.key==='Enter')play()};
+}
+let hls;function play(){const u=document.getElementById('u').value.trim(),v=document.getElementById('v'),s=document.getElementById('s');
+ if(!/^https?:\/\//i.test(u)){s.textContent='Valid http(s) link daalo.';return}
+ if(hls){hls.destroy();hls=null}s.textContent='Loading...';
+ if(/\.m3u8/i.test(u)&&window.Hls&&Hls.isSupported()){hls=new Hls();hls.loadSource(u);hls.attachMedia(v);
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>{v.play().catch(()=>{});s.textContent=''});
+  hls.on(Hls.Events.ERROR,(e,x)=>{if(x.fatal)s.textContent='Video load nahi hua (link ya CORS problem).'})}
+ else{v.src=u;v.onerror=()=>s.textContent='Video load nahi hua.';v.play().catch(()=>{});s.textContent=''}}
+init();
+</script></body></html>
